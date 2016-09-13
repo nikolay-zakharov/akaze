@@ -53,6 +53,10 @@ target_link_libraries(akaze_features AKAZE)
 add_executable(akaze_match akaze_match.cpp)
 target_link_libraries(akaze_match AKAZE)
 
+# Image matched inliers program
+add_executable(akaze_inliers akaze_inliers.cpp)
+target_link_libraries(akaze_inliers AKAZE)
+
 # Program that compares AKAZE with ORB and BRISK
 add_executable(akaze_compare akaze_compare.cpp)
 target_link_libraries(akaze_compare AKAZE)
