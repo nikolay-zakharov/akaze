@@ -46,7 +46,7 @@ int parse_input_options(AKAZEOptions &options, std::string &img_path1,
                         std::string &img_path2, std::string &homography_path,
                         int argc, char *argv[]);
 
-int save_inliers(const string& outFile, const vector<cv::Point2f> ptpairs);
+int save_inliers(const string& outFile, const vector<cv::Point2f> ptpairs, int nkpts1, float ratio);
 
 /* ************************************************************************* */
 int main(int argc, char *argv[]) {
@@ -55,7 +55,8 @@ int main(int argc, char *argv[]) {
     AKAZEOptions options;
     cv::Mat img1, img1_32, img2, img2_32, img1_rgb, img2_rgb, img_com, img_r;
     string img_path1, img_path2, inliers_path;
-    float rfactor = .60;
+    float ratio = 0.0, rfactor = .60;
+    int nkpts1 = 0, nmatches = 0, ninliers = 0;
 
     vector<cv::KeyPoint> kpts1, kpts2;
     vector<vector<cv::DMatch> > dmatches;
@@ -123,12 +124,19 @@ int main(int argc, char *argv[]) {
 
     compute_inliers_ransac(matches, inliers, MIN_H_ERROR, false);
 
+    // Compute the inliers statistics
+    nkpts1 = kpts1.size();
+    nmatches = matches.size()/2;
+    ninliers = inliers.size()/2;
+    ratio = 100.0*((float) ninliers / (float) nmatches);
+
     // Save inliers!!
-    save_inliers(inliers_path, inliers);
+    save_inliers(inliers_path, inliers, nkpts1, ratio);
 }
 
 /* ************************************************************************* */
-int save_inliers(const string& outFile, const vector<cv::Point2f> ptpairs) {
+int save_inliers(const string& outFile, const vector<cv::Point2f> ptpairs,
+                 int nkpts1, float ratio) {
     int x1, y1;
     int x2, y2;
 
@@ -139,7 +147,10 @@ int save_inliers(const string& outFile, const vector<cv::Point2f> ptpairs) {
         return -1;
     }
 
-    ipfile << "{\"points\": [" << endl;
+    ipfile << "{" << endl
+           << "\"pattern_keypoints_count\": " << nkpts1 << "," << endl
+           << "\"ratio\": " << ratio << "," << endl
+           << "\"inliers\": [" << endl;
 
     for (size_t i = 0; i < ptpairs.size(); i+= 2) {
         x1 = (int)(ptpairs[i].x+.5);
